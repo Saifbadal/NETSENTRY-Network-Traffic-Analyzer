@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block heading %}Demo lab{% endblock %}
+{% block content %}
+<div class="page-intro"><div class="eyebrow">SAFE SYNTHETIC TEST ENVIRONMENT</div><h1>Explore NETSENTRY with demo traffic</h1><p class="muted">Load a ready-made dataset or generate another batch. All records are synthetic metadata: this simulator does not send packets or scan any network.</p></div>
+<div class="stat-grid three">
+  <div class="stat-card"><div class="stat-label">DEMO PACKETS</div><div class="stat-value">{{ "{:,}".format(demo_count) }}</div><div class="stat-foot">Synthetic records in the local database</div></div>
+  <div class="stat-card"><div class="stat-label">SECURITY OBSERVATIONS</div><div class="stat-value">{{ demo_alerts }}</div><div class="stat-foot">Rule and ML observations across recorded data</div></div>
+  <div class="stat-card"><div class="stat-label">SIMULATION MODE</div><div class="stat-value small-value"><span class="status-dot green"></span> SAFE / OFFLINE</div><div class="stat-foot">No real network traffic is generated</div></div>
+</div>
+<div class="two-col">
+  <div class="panel"><div class="upload-icon">▤</div><h3>Load demo dataset</h3><p class="muted">Insert 180 synthetic packet records covering normal TCP, UDP, DNS and ICMP activity, simulated port-scan patterns, repeated service connection attempts and unusual packet metadata.</p>
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn primary" name="action" value="load">Load 180 sample records →</button></form>
+  </div>
+  <div class="panel"><div class="upload-icon">⚡</div><h3>Generate more traffic</h3><p class="muted">Add a fresh batch of 60 synthetic records with a different mix. Use this to demonstrate how the dashboard and alert history update.</p>
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" name="action" value="generate">Generate 60 records →</button></form>
+  </div>
+</div>
+<div class="panel"><h3>Included scenario categories</h3><div class="scenario-grid">
+  <div class="scenario"><span class="severity low">NORMAL</span><b>Everyday traffic</b><small>Typical web, DNS and ICMP metadata</small></div>
+  <div class="scenario"><span class="severity medium">SIMULATED</span><b>Port-scan pattern</b><small>One source contacting varied service ports</small></div>
+  <div class="scenario"><span class="severity medium">SIMULATED</span><b>Repeated connections</b><small>Repeated attempts to a selected service port</small></div>
+  <div class="scenario"><span class="severity low">UNUSUAL</span><b>Large / long DNS metadata</b><small>Large packet sizes and long query-name examples</small></div>
+</div></div>
+<div class="notice"><b>Demo limitations:</b> This is a synthetic dataset for exercising the application workflow, not a real PCAP and not ground-truth attack data. Rule detections may be incomplete or produce false positives. For a meaningful ML evaluation, use a labeled dataset and report precision, recall and false-positive rate.</div>
+<div class="quick-links"><a class="btn" href="{{ url_for('traffic') }}">View traffic records</a><a class="btn" href="{{ url_for('alerts') }}">Review alerts</a><a class="btn" href="{{ url_for('ml') }}">Open ML lab</a><a class="btn" href="{{ url_for('index') }}">Dashboard</a></div>
+{% endblock %}

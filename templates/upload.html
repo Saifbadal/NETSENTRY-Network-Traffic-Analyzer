@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block heading %}PCAP analyzer{% endblock %}
+{% block content %}<div class="page-intro"><div class="eyebrow">OFFLINE INVESTIGATION</div><h1>Analyze a packet capture</h1><p class="muted">Import a .pcap or .pcapng file and inspect packet metadata in the same dashboard.</p></div>
+<div class="panel upload-panel"><div class="upload-icon">⇧</div><h3>Upload packet capture</h3><p class="muted">Maximum file size: 32 MB. Processing is limited to the first 100,000 packets per upload.</p>
+<form method="post" enctype="multipart/form-data" class="upload-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="file" name="pcap" accept=".pcap,.pcapng" required><button class="btn primary">Analyze capture →</button></form>
+</div><div class="notice">PCAP files can contain sensitive network metadata. Use captures you own or are authorized to analyze. Uploaded files are removed after processing; extracted metadata is retained in the local database.</div>{% endblock %}

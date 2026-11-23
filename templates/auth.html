@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}{{ 'Create analyst account' if mode=='register' else 'Sign in' }} | NETSENTRY{% endblock %}
+{% block content %}
+<div class="auth-wrap"><div class="auth-card"><div class="brand auth-brand"><span class="brand-mark">N</span><span><b>NETSENTRY</b><small>NETWORK TRAFFIC ANALYZER</small></span></div>
+<div class="eyebrow">LOCAL SECURITY WORKSPACE</div><h1>{{ 'Create your analyst account' if mode=='register' else 'Welcome back' }}</h1>
+<p class="muted">{{ 'This first account becomes the local administrator.' if mode=='register' else 'Sign in to access your monitoring dashboard.' }}</p>
+<form method="post" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Username<input name="username" minlength="3" maxlength="40" required autocomplete="username" placeholder="e.g. analyst"></label>
+<label>Password<input type="password" name="password" minlength="10" required autocomplete="{{ 'new-password' if mode=='register' else 'current-password' }}" placeholder="At least 10 characters"></label>
+{% if mode=='register' %}<label>Confirm password<input type="password" name="confirm" minlength="10" required autocomplete="new-password"></label>{% endif %}
+<button class="btn primary full">{{ 'Create account' if mode=='register' else 'Sign in' }} →</button></form>
+<div class="auth-note">Your data is stored locally in this project folder. This starter app is intended for local use, not direct public deployment.</div>
+</div></div>
+{% endblock %}

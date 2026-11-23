@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}NTA | Network Traffic Analyzer{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  {% if current_user %}
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">N</span><span><b>NETSENTRY</b><small>NETWORK ANALYZER</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav>
+      <a href="{{ url_for('index') }}" class="{% if request.endpoint=='index' %}active{% endif %}">▦ <span>Overview</span></a>
+      <a href="{{ url_for('capture') }}" class="{% if request.endpoint=='capture' %}active{% endif %}">◉ <span>Live Capture</span></a>
+      <a href="{{ url_for('demo') }}" class="{% if request.endpoint=='demo' %}active{% endif %}">✦ <span>Demo Lab</span></a>
+      <a href="{{ url_for('traffic') }}" class="{% if request.endpoint=='traffic' %}active{% endif %}">⇄ <span>Traffic Records</span></a>
+      <a href="{{ url_for('upload') }}" class="{% if request.endpoint=='upload' %}active{% endif %}">⇧ <span>PCAP Analyzer</span></a>
+      <a href="{{ url_for('alerts') }}" class="{% if request.endpoint=='alerts' %}active{% endif %}">⚑ <span>Security Alerts</span></a>
+      <a href="{{ url_for('ml') }}" class="{% if request.endpoint=='ml' %}active{% endif %}">⌁ <span>ML Anomaly Lab</span></a>
+    </nav>
+    <div class="sidebar-bottom"><div class="user-chip"><div class="avatar">{{ current_user[:1]|upper }}</div><div><b>{{ current_user }}</b><small>Local analyst</small></div></div>
+      <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="logout">↪ Sign out</button></form>
+    </div>
+  </aside>
+  {% endif %}
+  <main class="main-area">
+    {% if current_user %}<header class="topbar"><div><span class="eyebrow">SECURITY OPERATIONS / LOCAL INSTANCE</span><h2>{% block heading %}Overview{% endblock %}</h2></div><div class="top-status"><span class="pulse"></span> LOCAL MONITORING <span class="user-pill">{{ current_user }}</span></div></header>{% endif %}
+    <section class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+      {% block content %}{% endblock %}
+    </section>
+    <footer>NETSENTRY · Educational network monitoring tool · Use only on networks you are authorized to inspect.</footer>
+  </main>
+</div>
+{% block scripts %}{% endblock %}
+</body></html>

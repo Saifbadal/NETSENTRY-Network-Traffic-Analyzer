@@ -1,0 +1,69 @@
+{% extends "base.html" %}{% block heading %}Network overview{% endblock %}
+{% block content %}
+<div class="welcome-row"><div><div class="eyebrow">LIVE SECURITY SNAPSHOT · AUTO-REFRESH EVERY 2 SECONDS</div><h1>Network intelligence, <span class="accent">at a glance.</span></h1><p class="muted">Monitor packet activity, inspect traffic and investigate noteworthy patterns.</p></div><a class="btn primary" href="{{ url_for('capture') }}">◉ Open live capture</a></div>
+<div class="stat-grid">
+<div class="stat-card"><div class="stat-label">PACKETS RECORDED</div><div class="stat-value" id="live-packets">{{ "{:,}".format(total) }}</div><div class="stat-foot">Across live and PCAP sources</div></div>
+<div class="stat-card"><div class="stat-label">TOTAL PACKET BYTES</div><div class="stat-value" id="live-bytes">{{ "{:,}".format(byte_count) }}</div><div class="stat-foot">Metadata-level accounting</div></div>
+<div class="stat-card"><div class="stat-label">OPEN ALERTS</div><div class="stat-value {{ 'warning-text' if alert_count else '' }}" id="live-alerts">{{ alert_count }}</div><div class="stat-foot">Rule-based observations</div></div>
+<div class="stat-card"><div class="stat-label">CAPTURE STATUS</div><div class="stat-value small-value" id="capture-status"><span class="status-dot {{ 'green' if capture_state.running else 'gray' }}"></span>{{ 'RUNNING' if capture_state.running else 'STOPPED' }}</div><div class="stat-foot">{{ capture_state.interface or 'No active interface' }}</div></div>
+</div>
+<div class="two-col">
+<div class="panel"><div class="panel-head"><div><h3>Protocol distribution</h3><p class="muted">Recorded packet mix</p></div><span class="tag">TRAFFIC</span></div><div class="chart-wrap"><canvas id="protocolChart"></canvas>{% if not protocols %}<div class="empty-overlay">No traffic recorded yet. Start a capture or import a PCAP.</div>{% endif %}</div></div>
+<div class="panel"><div class="panel-head"><div><h3>Top communicating IPs</h3><p class="muted">Source and destination appearances</p></div><span class="tag">NETWORK</span></div>
+{% if top_ips %}<div class="bar-list" id="top-ips-list">{% for ip in top_ips %}<div class="bar-row"><span>{{ ip.ip }}</span><div class="bar-track"><i style="width:{{ [100, (ip.count / top_ips[0].count * 100)|int]|min }}%"></i></div><b>{{ ip.count }}</b></div>{% endfor %}</div>{% else %}<div class="empty-state">IP statistics will appear after traffic is collected.</div>{% endif %}</div>
+</div>
+<div class="panel table-panel"><div class="panel-head"><div><h3>Recent packet records</h3><p class="muted">Latest observed network metadata</p></div><a class="text-link" href="{{ url_for('traffic') }}">View all →</a></div>
+{% if recent %}<div class="table-scroll"><table><thead><tr><th>TIME</th><th>SOURCE</th><th>DESTINATION</th><th>PROTOCOL</th><th>BYTES</th><th>ORIGIN</th></tr></thead><tbody id="recent-packets">{% for p in recent %}<tr><td>{{ p.timestamp }}</td><td>{{ p.src_ip or '—' }}{% if p.src_port %}:{{ p.src_port }}{% endif %}</td><td>{{ p.dst_ip or '—' }}{% if p.dst_port %}:{{ p.dst_port }}{% endif %}</td><td><span class="protocol">{{ p.protocol }}</span></td><td>{{ p.length }}</td><td>{{ p.source }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state">Nothing captured yet. Start a live session or upload a PCAP file to populate the dashboard.</div>{% endif %}</div>
+<div class="panel"><div class="panel-head"><div><h3>Latest security observations</h3><p class="muted">Rule-based indicators to review, not definitive incident verdicts</p></div><a class="text-link" href="{{ url_for('alerts') }}">Alert center →</a></div>
+{% if alerts %}<div class="alert-list" id="recent-alerts">{% for a in alerts %}<div class="alert-item"><span class="severity {{ a.severity|lower }}">{{ a.severity }}</span><div><b>{{ a.category }}</b><p>{{ a.message }}</p><small>{{ a.timestamp }}</small></div><span class="muted">{{ a.status }}</span></div>{% endfor %}</div>{% else %}<div class="empty-state">No rule alerts recorded.</div>{% endif %}</div>
+{% endblock %}
+{% block scripts %}<script>
+let protocolChart = null;
+const chartCanvas = document.getElementById('protocolChart');
+function initChart(labels, values) {
+  if (!chartCanvas) return;
+  if (protocolChart) {
+    protocolChart.data.labels = labels;
+    protocolChart.data.datasets[0].data = values;
+    protocolChart.update();
+    return;
+  }
+  protocolChart = new Chart(chartCanvas, {
+    type:'doughnut',
+    data:{labels, datasets:[{data:values,borderWidth:2,backgroundColor:['#38bdf8','#818cf8','#34d399','#fbbf24','#f472b6','#a78bfa','#fb7185','#94a3b8']}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#aab8cb',padding:16}}}}
+  });
+}
+initChart({{ protocols|map(attribute='protocol')|list|tojson }}, {{ protocols|map(attribute='count')|list|tojson }});
+function esc(v){return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderRecent(rows) {
+ const body=document.getElementById('recent-packets'); if(!body) return;
+ body.innerHTML=rows.map(p=>`<tr><td>${esc(p.timestamp)}</td><td>${esc(p.src_ip||'—')}${p.src_port?':'+esc(p.src_port):''}</td><td>${esc(p.dst_ip||'—')}${p.dst_port?':'+esc(p.dst_port):''}</td><td><span class="protocol">${esc(p.protocol)}</span></td><td>${esc(p.length)}</td><td>${esc(p.source)}</td></tr>`).join('');
+}
+function renderIPs(rows) {
+ const el=document.getElementById('top-ips-list'); if(!el) return;
+ if(!rows.length){el.innerHTML='<div class="empty-state">IP statistics will appear after traffic is collected.</div>';return;}
+ const max=rows[0].count||1;
+ el.innerHTML=rows.map(r=>`<div class="bar-row"><span>${esc(r.ip)}</span><div class="bar-track"><i style="width:${Math.min(100,Math.round(r.count/max*100))}%"></i></div><b>${esc(r.count)}</b></div>`).join('');
+}
+function renderAlerts(rows) {
+ const el=document.getElementById('recent-alerts'); if(!el) return;
+ if(!rows.length){el.innerHTML='<div class="empty-state">No rule alerts recorded.</div>';return;}
+ el.innerHTML=rows.map(a=>`<div class="alert-item"><span class="severity ${esc(a.severity.toLowerCase())}">${esc(a.severity)}</span><div><b>${esc(a.category)}</b><p>${esc(a.message)}</p><small>${esc(a.timestamp)}</small></div><span class="muted">${esc(a.status)}</span></div>`).join('');
+}
+async function refreshDashboard(){
+ try {
+   const response=await fetch('{{ url_for("api_live") }}',{headers:{'Accept':'application/json'},cache:'no-store'});
+   if(!response.ok) return;
+   const d=await response.json();
+   document.getElementById('live-packets').textContent=Number(d.packets).toLocaleString();
+   document.getElementById('live-bytes').textContent=Number(d.bytes).toLocaleString();
+   document.getElementById('live-alerts').textContent=d.open_alerts;
+   document.getElementById('capture-status').innerHTML=`<span class="status-dot ${d.capture_running?'green':'gray'}"></span>${d.capture_running?'RUNNING':'STOPPED'}`;
+   initChart(d.protocols.map(p=>p.name),d.protocols.map(p=>p.count));
+   renderIPs(d.top_ips); renderRecent(d.recent); renderAlerts(d.alerts);
+ } catch(e) { /* retry on next poll */ }
+}
+refreshDashboard();
+setInterval(refreshDashboard, 2000);
+</script>{% endblock %}
